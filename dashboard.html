@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard - Stock Management App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav>
+    <ul class="nav-list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="stock_in.html">Stock In</a></li>
+      <li><a href="stock_out.html">Stock Out</a></li>
+      <li><a href="purchases.html">Purchases</a></li>
+      <li><a href="stock_balance.html">Stock Balance</a></li>
+      <li><a href="dashboard.html" class="active">Dashboard</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Monthly Summary Report</h1>
+    <div id="monthlySummary"></div>
+
+    <button id="exportBtn">Export to Excel (coming soon)</button>
+  </main>
+
+  <script type="module">
+    import { db } from "./firebase.js";
+    import {
+      collection,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+    const stockInRef = collection(db, "stock_in");
+    const stockOutRef = collection(db, "stock_out");
+
+    async function loadMonthlySummary() {
+      const stockInSnap = await getDocs(stockInRef);
+      const stockOutSnap = await getDocs(stockOutRef);
+
+      const formatMonth = (dateStr) => {
+        const d = new Date(dateStr);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      };
+
+      const inSummary = {};
+      const outSummary = {};
+
+      stockInSnap.forEach(doc => {
+        const data = doc.data();
+        const month = formatMonth(data.date);
+        inSummary[month] = (inSummary[month] || 0) + data.quantity;
+      });
+
+      stockOutSnap.forEach(doc => {
+        const data = doc.data();
+        const month = formatMonth(data.date);
+        outSummary[month] = (outSummary[month] || 0) + data.quantity;
+      });
+
+      const allMonths = new Set([...Object.keys(inSummary), ...Object.keys(outSummary)]);
+      const summaryDiv = document.getElementById("monthlySummary");
+      summaryDiv.innerHTML = `
+        <table border="1" cellpadding="5" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Total Stock In</th>
+              <th>Total Stock Out</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${[...allMonths].sort().map(month => `
+              <tr>
+                <td>${month}</td>
+                <td>${inSummary[month] || 0}</td>
+                <td>${outSummary[month] || 0}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    loadMonthlySummary();
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      alert("Export to Excel will be available soon.");
+    });
+  </script>
+</body>
+</html>
