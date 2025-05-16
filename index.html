@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock Management App - Home</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav>
+    <ul class="nav-list">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="stock_in.html">Stock In</a></li>
+      <li><a href="stock_out.html">Stock Out</a></li>
+      <li><a href="purchases.html">Purchases</a></li>
+      <li><a href="stock_balance.html">Stock Balance</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Welcome to Stock Management App</h1>
+    <div id="firebase-status">Checking Firebase connection...</div>
+  </main>
+
+  <script type="module">
+    import { db } from "./firebase.js";
+
+    // Try a simple Firestore read to test connection
+    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+    async function checkFirestore() {
+      try {
+        // Try to get an empty collection (e.g., test connection)
+        const querySnapshot = await getDocs(collection(db, "testConnection"));
+        document.getElementById("firebase-status").textContent = "Firebase connected successfully!";
+      } catch (error) {
+        document.getElementById("firebase-status").textContent = "Firebase connection failed: " + error.message;
+      }
+    }
+
+    checkFirestore();
+  </script>
+
+</body>
+</html>
