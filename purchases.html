@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Purchases - Stock Management App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav>
+    <ul class="nav-list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="stock_in.html">Stock In</a></li>
+      <li><a href="stock_out.html">Stock Out</a></li>
+      <li><a href="purchases.html" class="active">Purchases</a></li>
+      <li><a href="stock_balance.html">Stock Balance</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Record Purchase</h1>
+
+    <form id="purchaseForm">
+      <label for="date">Date:</label><br />
+      <input type="date" id="date" name="date" required /><br /><br />
+
+      <label for="item">Item Purchased:</label><br />
+      <input type="text" id="item" name="item" required /><br /><br />
+
+      <label for="quantity">Quantity Purchased:</label><br />
+      <input type="number" id="quantity" name="quantity" min="1" required /><br /><br />
+
+      <button type="submit">Add Purchase</button>
+    </form>
+
+    <h2>Purchase Records</h2>
+    <table id="purchaseTable" border="1" cellpadding="5" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Item Purchased</th>
+          <th>Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Purchase records will appear here -->
+      </tbody>
+    </table>
+  </main>
+
+  <script type="module">
+    import { db } from "./firebase.js";
+    import {
+      collection,
+      addDoc,
+      query,
+      orderBy,
+      onSnapshot,
+      getDocs,
+      where,
+      doc,
+      updateDoc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+    const purchaseForm = document.getElementById("purchaseForm");
+    const purchaseTableBody = document.querySelector("#purchaseTable tbody");
+
+    const purchasesCollection = collection(db, "purchases");
+    const stockInCollection = collection(db, "stock_in");
+
+    function renderPurchase(doc) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${doc.data().date}</td>
+        <td>${doc.data().item}</td>
+        <td>${doc.data().quantity}</td>
+      `;
+      purchaseTableBody.appendChild(tr);
+    }
+
+    function clearPurchaseTable() {
+      purchaseTableBody.innerHTML = "";
+    }
+
+    // Listen and display live purchases
+    const q = query(purchasesCollection, orderBy("date", "desc"));
+    onSnapshot(q, (snapshot) => {
+      clearPurchaseTable();
+      snapshot.forEach(doc => {
+        renderPurchase(doc);
+      });
+    });
+
+    // On submit, add purchase and update stock in quantity
+    purchaseForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const date = purchaseForm.date.value;
+      const item = purchaseForm.item.value.trim();
+      const quantity = Number(purchaseForm.quantity.value);
+
+      if (!date || !item || !quantity || quantity <= 0) {
+        alert("Please fill all fields correctly.");
+        return;
+      }
+
+      try {
+        // Add purchase record
+        await addDoc(purchasesCollection, { date, item, quantity });
+
+        // Now update stock_in for this item
+
+        // Query stock_in documents matching this item
+        const stockInQuery = query(stockInCollection, where("item", "==", item));
+        const stockInSnapshot = await getDocs(stockInQuery);
+
+        if (stockInSnapshot.empty) {
+          // No existing stock_in record for this item, create one with quantity = purchase quantity
+          await addDoc(stockInCollection, { date, item, quantity });
+        } else {
+          // Update existing stock_in quantity by adding purchased quantity
+          stockInSnapshot.forEach(async (docSnap) => {
+            const currentQuantity = docSnap.data().quantity;
+            const newQuantity = currentQuantity + quantity;
+            const docRef = doc(db, "stock_in", docSnap.id);
+            await updateDoc(docRef, { quantity: newQuantity });
+          });
+        }
+
+        purchaseForm.reset();
+      } catch (error) {
+        alert("Error adding purchase: " + error.message);
+      }
+    });
+  </script>
+</body>
+</html>
