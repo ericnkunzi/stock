@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock Out - Stock Management App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav>
+    <ul class="nav-list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="stock_in.html">Stock In</a></li>
+      <li><a href="stock_out.html" class="active">Stock Out</a></li>
+      <li><a href="purchases.html">Purchases</a></li>
+      <li><a href="stock_balance.html">Stock Balance</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Stock Out Entry</h1>
+
+    <form id="stockOutForm">
+      <label for="date">Date:</label><br />
+      <input type="date" id="date" name="date" required /><br /><br />
+
+      <label for="item">Item Description:</label><br />
+      <input type="text" id="item" name="item" required /><br /><br />
+
+      <label for="quantity">Quantity:</label><br />
+      <input type="number" id="quantity" name="quantity" min="1" required /><br /><br />
+
+      <button type="submit">Add Stock Out</button>
+    </form>
+
+    <h2>Stock Out Records</h2>
+    <table id="stockOutTable" border="1" cellpadding="5" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Item Description</th>
+          <th>Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Stock out records will appear here -->
+      </tbody>
+    </table>
+  </main>
+
+  <script type="module">
+    import { db } from "./firebase.js";
+    import {
+      collection,
+      addDoc,
+      query,
+      orderBy,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+    const stockOutForm = document.getElementById("stockOutForm");
+    const stockOutTableBody = document.querySelector("#stockOutTable tbody");
+    const stockOutCollection = collection(db, "stock_out");
+
+    function renderStockOut(doc) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${doc.data().date}</td>
+        <td>${doc.data().item}</td>
+        <td>${doc.data().quantity}</td>
+      `;
+      stockOutTableBody.appendChild(tr);
+    }
+
+    function clearTable() {
+      stockOutTableBody.innerHTML = "";
+    }
+
+    const q = query(stockOutCollection, orderBy("date", "desc"));
+    onSnapshot(q, (snapshot) => {
+      clearTable();
+      snapshot.forEach(doc => {
+        renderStockOut(doc);
+      });
+    });
+
+    stockOutForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const date = stockOutForm.date.value;
+      const item = stockOutForm.item.value.trim();
+      const quantity = Number(stockOutForm.quantity.value);
+
+      if (!date || !item || !quantity || quantity <= 0) {
+        alert("Please fill all fields correctly.");
+        return;
+      }
+
+      try {
+        await addDoc(stockOutCollection, { date, item, quantity });
+        stockOutForm.reset();
+      } catch (error) {
+        alert("Error adding stock out: " + error.message);
+      }
+    });
+  </script>
+</body>
+</html>
