@@ -2,45 +2,113 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stock Management System - Home</title>
-  <link rel="stylesheet" href="style.css" />
-  <!-- Google Fonts for nice look -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Stock Management System</h1>
-    <nav>
-      <ul class="nav-menu">
-        <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="stock_in.html">Stock In</a></li>
-        <li><a href="stock_out.html">Stock Out</a></li>
-        <li><a href="purchases.html">Purchases</a></li>
-        <li><a href="stock_balance.html">Stock Balance</a></li>
-        <li><a href="dashboard.html">Dashboard</a></li>
-      </ul>
-    </nav>
-  </header>
+  <nav>
+    <ul>
+      <li><a href="stock_in.html">Stock In</a></li>
+      <li><a href="stock_out.html">Stock Out</a></li>
+      <li><a href="purchases.html">Purchases</a></li>
+      <li><a href="stock_balance.html">Stock Balance</a></li>
+      <li><a href="index.html" class="active">Dashboard</a></li>
+    </ul>
+  </nav>
 
-  <main class="container">
-    <section class="welcome">
-      <h2>Welcome to the Stock Management Web App</h2>
-      <p>
-        Use the navigation menu above to manage stock in, stock out, purchases, view stock balance,
-        and see reports in the dashboard.
-      </p>
-      <p>
-        All data is saved securely in Firebase Firestore and accessible anytime from anywhere.
-      </p>
-      <p>
-        Please select a page to get started.
-      </p>
-    </section>
+  <main>
+    <h1>📊 Dashboard - Stock Overview</h1>
+    <button onclick="exportToPDF()">📄 Export to PDF</button>
+
+    <div class="dashboard">
+      <table id="dashboard-table">
+        <thead>
+          <tr>
+            <th>Item Description</th>
+            <th>Stock In</th>
+            <th>Stock Out</th>
+            <th>Purchases</th>
+            <th>Total Stock</th>
+          </tr>
+        </thead>
+        <tbody id="dashboard-body">
+          <tr><td colspan="5">Loading dashboard data...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </main>
 
-  <footer>
-    <p>© 2025 Your Company Name | Developed by AI Assistant</p>
-  </footer>
+  <script type="module">
+    import { db } from './firebase.js';
+    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+    const dashboardBody = document.getElementById('dashboard-body');
+
+    async function loadDashboard() {
+      const stockInSnap = await getDocs(collection(db, "stock_in"));
+      const stockOutSnap = await getDocs(collection(db, "stock_out"));
+      const purchasesSnap = await getDocs(collection(db, "purchases"));
+
+      const data = {};
+
+      stockInSnap.forEach(doc => {
+        const { item, quantity } = doc.data();
+        data[item] = data[item] || { in: 0, out: 0, purchased: 0 };
+        data[item].in += parseInt(quantity);
+      });
+
+      stockOutSnap.forEach(doc => {
+        const { item, quantity } = doc.data();
+        data[item] = data[item] || { in: 0, out: 0, purchased: 0 };
+        data[item].out += parseInt(quantity);
+      });
+
+      purchasesSnap.forEach(doc => {
+        const { item, quantity } = doc.data();
+        data[item] = data[item] || { in: 0, out: 0, purchased: 0 };
+        data[item].purchased += parseInt(quantity);
+      });
+
+      dashboardBody.innerHTML = '';
+
+      Object.keys(data).forEach(item => {
+        const total = (data[item].in + data[item].purchased) - data[item].out;
+        const row = `
+          <tr>
+            <td>${item}</td>
+            <td>${data[item].in}</td>
+            <td>${data[item].out}</td>
+            <td>${data[item].purchased}</td>
+            <td>${total}</td>
+          </tr>`;
+        dashboardBody.innerHTML += row;
+      });
+
+      if (Object.keys(data).length === 0) {
+        dashboardBody.innerHTML = '<tr><td colspan="5">No data available yet.</td></tr>';
+      }
+    }
+
+    window.exportToPDF = function () {
+      import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js').then(() => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        html2canvas(document.querySelector('.dashboard')).then(canvas => {
+          const imgData = canvas.toDataURL('image/png');
+          const imgProps = doc.getImageProperties(imgData);
+          const pdfWidth = doc.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+          doc.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
+          doc.save("stock_dashboard.pdf");
+        });
+      });
+    }
+
+    loadDashboard();
+  </script>
 </body>
 </html>
