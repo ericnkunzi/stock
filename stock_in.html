@@ -1,56 +1,160 @@
-<!-- stock_in.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Stock In</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock Management App - Stock In</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg fixed-top">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="index.html">Stock Manager</a>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link active" href="stock_in.html">Stock In</a></li>
-          <li class="nav-item"><a class="nav-link" href="stock_out.html">Stock Out</a></li>
-          <li class="nav-item"><a class="nav-link" href="purchases.html">Purchases</a></li>
-          <li class="nav-item"><a class="nav-link" href="stock_balance.html">Stock Balance</a></li>
-          <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
-        </ul>
-      </div>
-    </div>
-  </nav>
+  <header>
+    <h1>Stock Management App</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="stock_in.html" class="active">Stock In</a>
+      <a href="stock_out.html">Stock Out</a>
+      <a href="purchases.html">Purchases</a>
+      <a href="stock_balance.html">Stock Balance</a>
+      <a href="dashboard.html">Dashboard</a>
+    </nav>
+  </header>
 
-  <!-- Content -->
-  <div class="container mt-5">
-    <h2 class="text-center mb-4">Stock In</h2>
-    <form id="stockInForm">
-      <div class="mb-3">
-        <label for="stockInDate" class="form-label">Date</label>
-        <input type="date" class="form-control" id="stockInDate" required />
-      </div>
-      <div class="mb-3">
-        <label for="stockInItem" class="form-label">Item Description</label>
-        <input type="text" class="form-control" id="stockInItem" placeholder="Enter item description" required />
-      </div>
-      <div class="mb-3">
-        <label for="stockInQuantity" class="form-label">Quantity</label>
-        <input type="number" class="form-control" id="stockInQuantity" min="1" required />
-      </div>
-      <button type="submit" class="btn btn-primary">Add Stock In</button>
-    </form>
+  <main>
+    <section>
+      <h2>Stock In</h2>
+      <form id="stockInForm">
+        <label for="date">Date:</label><br />
+        <input type="date" id="date" name="date" required /><br />
 
-    <hr />
+        <label for="itemDesc">Item Description:</label><br />
+        <input type="text" id="itemDesc" name="itemDesc" placeholder="Enter item description" required /><br />
 
-    <h3 class="mt-4">Stock In Records (This Month)</h3>
-    <div id="stockInList">Loading stock in records...</div>
-  </div>
+        <label for="quantity">Quantity:</label><br />
+        <input type="number" id="quantity" name="quantity" min="1" placeholder="Enter quantity" required /><br />
 
-  <!-- Firebase & Scripts -->
-  <script type="module" src="firebase.js"></script>
-  <script type="module" src="script.js"></script>
+        <button type="submit">Add Stock In</button>
+      </form>
+
+      <h3>Current Month's Stock In Records</h3>
+      <div class="table-container">
+        <table id="stockInTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Item Description</th>
+              <th>Quantity</th>
+            </tr>
+          </thead>
+          <tbody id="stockInTableBody">
+            <!-- Stock in records will be dynamically inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 Your Company Name. All rights reserved.</p>
+  </footer>
+
+  <script type="module">
+    import { db } from './firebase.js';
+    import {
+      collection,
+      addDoc,
+      query,
+      orderBy,
+      where,
+      getDocs,
+      onSnapshot,
+      Timestamp,
+      startAt,
+      endAt
+    } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+
+    const stockInForm = document.getElementById('stockInForm');
+    const stockInTableBody = document.getElementById('stockInTableBody');
+
+    // Helper to format date to YYYY-MM-DD for input & display
+    function formatDate(date) {
+      const d = new Date(date);
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const day = d.getDate().toString().padStart(2, '0');
+      const year = d.getFullYear();
+      return `${year}-${month}-${day}`;
+    }
+
+    // Get the start and end timestamps of the current month
+    function getCurrentMonthRange() {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      return { start, end };
+    }
+
+    async function addStockInRecord(date, itemDesc, quantity) {
+      try {
+        await addDoc(collection(db, 'stock_in'), {
+          date: Timestamp.fromDate(new Date(date)),
+          itemDesc: itemDesc,
+          quantity: Number(quantity)
+        });
+      } catch (error) {
+        alert('Error adding stock in record: ' + error.message);
+      }
+    }
+
+    // Render stock in rows in table body
+    function renderStockInRecords(records) {
+      stockInTableBody.innerHTML = '';
+      records.forEach(doc => {
+        const data = doc.data();
+        const dateStr = formatDate(data.date.toDate());
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${dateStr}</td>
+          <td>${data.itemDesc}</td>
+          <td>${data.quantity}</td>
+        `;
+        stockInTableBody.appendChild(tr);
+      });
+    }
+
+    // Load current month stock in records with live updates
+    function listenToCurrentMonthStockIn() {
+      const { start, end } = getCurrentMonthRange();
+      const q = query(
+        collection(db, 'stock_in'),
+        where('date', '>=', Timestamp.fromDate(start)),
+        where('date', '<=', Timestamp.fromDate(end)),
+        orderBy('date', 'desc')
+      );
+
+      onSnapshot(q, snapshot => {
+        renderStockInRecords(snapshot.docs);
+      }, error => {
+        alert('Error fetching stock in records: ' + error.message);
+      });
+    }
+
+    stockInForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const date = stockInForm.date.value;
+      const itemDesc = stockInForm.itemDesc.value.trim();
+      const quantity = stockInForm.quantity.value;
+
+      if (!date || !itemDesc || !quantity || quantity <= 0) {
+        alert('Please fill all fields correctly.');
+        return;
+      }
+
+      await addStockInRecord(date, itemDesc, quantity);
+
+      stockInForm.reset();
+    });
+
+    // Initial call to load and listen to stock in records
+    listenToCurrentMonthStockIn();
+  </script>
 </body>
 </html>
