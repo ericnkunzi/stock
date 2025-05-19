@@ -1,122 +1,56 @@
+<!-- stock_in.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stock In - Stock Management App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock In</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <nav>
-    <ul class="nav-list">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="stock_in.html" class="active">Stock In</a></li>
-      <li><a href="stock_out.html">Stock Out</a></li>
-      <li><a href="purchases.html">Purchases</a></li>
-      <li><a href="stock_balance.html">Stock Balance</a></li>
-      <li><a href="dashboard.html">Dashboard</a></li>
-    </ul>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html">Stock Manager</a>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link active" href="stock_in.html">Stock In</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock_out.html">Stock Out</a></li>
+          <li class="nav-item"><a class="nav-link" href="purchases.html">Purchases</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock_balance.html">Stock Balance</a></li>
+          <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
   </nav>
 
-  <main>
-    <h1>Stock In Entry</h1>
-
+  <!-- Content -->
+  <div class="container mt-5">
+    <h2 class="text-center mb-4">Stock In</h2>
     <form id="stockInForm">
-      <label for="date">Date:</label><br />
-      <input type="date" id="date" name="date" required /><br /><br />
-
-      <label for="item">Item Description:</label><br />
-      <input type="text" id="item" name="item" required /><br /><br />
-
-      <label for="quantity">Quantity:</label><br />
-      <input type="number" id="quantity" name="quantity" min="1" required /><br /><br />
-
-      <button type="submit">Add Stock In</button>
+      <div class="mb-3">
+        <label for="stockInDate" class="form-label">Date</label>
+        <input type="date" class="form-control" id="stockInDate" required />
+      </div>
+      <div class="mb-3">
+        <label for="stockInItem" class="form-label">Item Description</label>
+        <input type="text" class="form-control" id="stockInItem" placeholder="Enter item description" required />
+      </div>
+      <div class="mb-3">
+        <label for="stockInQuantity" class="form-label">Quantity</label>
+        <input type="number" class="form-control" id="stockInQuantity" min="1" required />
+      </div>
+      <button type="submit" class="btn btn-primary">Add Stock In</button>
     </form>
 
-    <h2>Stock In Records</h2>
-    <table id="stockInTable" border="1" cellpadding="5" cellspacing="0">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Item Description</th>
-          <th>Quantity</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Stock in records will be appended here -->
-      </tbody>
-    </table>
-  </main>
+    <hr />
 
-  <script type="module">
-    import { db } from "./firebase.js";
-    import {
-      collection,
-      addDoc,
-      getDocs,
-      query,
-      orderBy,
-      onSnapshot
-    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    <h3 class="mt-4">Stock In Records (This Month)</h3>
+    <div id="stockInList">Loading stock in records...</div>
+  </div>
 
-    const stockInForm = document.getElementById("stockInForm");
-    const stockInTableBody = document.querySelector("#stockInTable tbody");
-    const stockInCollection = collection(db, "stock_in");
-
-    // Function to render records in table
-    function renderStockIn(doc) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${doc.data().date}</td>
-        <td>${doc.data().item}</td>
-        <td>${doc.data().quantity}</td>
-      `;
-      stockInTableBody.appendChild(tr);
-    }
-
-    // Clear table before re-rendering
-    function clearTable() {
-      stockInTableBody.innerHTML = "";
-    }
-
-    // Real-time listener to display data
-    const q = query(stockInCollection, orderBy("date", "desc"));
-    onSnapshot(q, (snapshot) => {
-      clearTable();
-      snapshot.forEach(doc => {
-        renderStockIn(doc);
-      });
-    });
-
-    // Handle form submission to add stock in
-    stockInForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const date = stockInForm.date.value;
-      const item = stockInForm.item.value.trim();
-      const quantity = Number(stockInForm.quantity.value);
-
-      if (!date || !item || !quantity || quantity <= 0) {
-        alert("Please fill all fields correctly.");
-        return;
-      }
-
-      try {
-        await addDoc(stockInCollection, {
-          date,
-          item,
-          quantity
-        });
-
-        // Clear form for next entry
-        stockInForm.reset();
-
-      } catch (error) {
-        alert("Error adding stock in: " + error.message);
-      }
-    });
-  </script>
+  <!-- Firebase & Scripts -->
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
