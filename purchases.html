@@ -1,56 +1,126 @@
-<!-- purchases.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Purchases</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg fixed-top">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="index.html">Stock Manager</a>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="stock_in.html">Stock In</a></li>
-          <li class="nav-item"><a class="nav-link" href="stock_out.html">Stock Out</a></li>
-          <li class="nav-item"><a class="nav-link active" href="purchases.html">Purchases</a></li>
-          <li class="nav-item"><a class="nav-link" href="stock_balance.html">Stock Balance</a></li>
-          <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
-        </ul>
-      </div>
-    </div>
+  <nav>
+    <ul>
+      <li><a href="stock_in.html">Stock In</a></li>
+      <li><a href="stock_out.html">Stock Out</a></li>
+      <li><a href="purchases.html" class="active">Purchases</a></li>
+      <li><a href="stock_balance.html">Stock Balance</a></li>
+      <li><a href="index.html">Dashboard</a></li>
+    </ul>
   </nav>
 
-  <!-- Content -->
-  <div class="container mt-5">
-    <h2 class="text-center mb-4">Purchases</h2>
+  <main>
+    <h1>🛒 Record Purchase</h1>
     <form id="purchaseForm">
-      <div class="mb-3">
-        <label for="purchaseDate" class="form-label">Date</label>
-        <input type="date" class="form-control" id="purchaseDate" required />
-      </div>
-      <div class="mb-3">
-        <label for="purchaseItem" class="form-label">Item Purchased</label>
-        <input type="text" class="form-control" id="purchaseItem" placeholder="Enter item name" required />
-      </div>
-      <div class="mb-3">
-        <label for="purchaseQuantity" class="form-label">Quantity Purchased</label>
-        <input type="number" class="form-control" id="purchaseQuantity" min="1" required />
-      </div>
-      <button type="submit" class="btn btn-success">Add Purchase</button>
+      <label for="item">Item Name:</label>
+      <input type="text" id="item" required><br>
+
+      <label for="date">Date of Purchase:</label>
+      <input type="date" id="date" required><br>
+
+      <label for="quantity">Quantity Purchased:</label>
+      <input type="number" id="quantity" required><br>
+
+      <button type="submit">✅ Save Purchase</button>
     </form>
 
-    <hr />
+    <div class="entries">
+      <h2>Recent Purchases</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Item</th>
+            <th>Quantity</th>
+          </tr>
+        </thead>
+        <tbody id="purchaseList">
+          <tr><td colspan="3">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
 
-    <h3 class="mt-4">Purchase Records (This Month)</h3>
-    <div id="purchaseList">Loading purchases...</div>
-  </div>
+  <script type="module">
+    import { db } from './firebase.js';
+    import { collection, addDoc, getDocs, updateDoc, doc, getDoc, setDoc, Timestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-  <!-- Firebase & Scripts -->
-  <script type="module" src="firebase.js"></script>
-  <script type="module" src="script.js"></script>
+    const purchaseForm = document.getElementById('purchaseForm');
+    const purchaseList = document.getElementById('purchaseList');
+
+    purchaseForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const item = document.getElementById('item').value.trim();
+      const date = document.getElementById('date').value;
+      const quantity = parseInt(document.getElementById('quantity').value);
+
+      if (!item || quantity <= 0) {
+        alert("Please enter a valid item and quantity.");
+        return;
+      }
+
+      // Add to purchases
+      await addDoc(collection(db, "purchases"), {
+        item,
+        date,
+        quantity,
+        timestamp: Timestamp.now()
+      });
+
+      // Update stock_balance
+      const itemRef = doc(db, "stock_balance", item);
+      const docSnap = await getDoc(itemRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const newBalance = data.current_balance + quantity;
+        await updateDoc(itemRef, {
+          current_balance: newBalance
+        });
+      } else {
+        await setDoc(itemRef, {
+          opening_stock: 0,
+          current_balance: quantity,
+          safety_stock: 0,
+          status: "OK"
+        });
+      }
+
+      purchaseForm.reset();
+      loadPurchaseList();
+    });
+
+    async function loadPurchaseList() {
+      const q = query(collection(db, "purchases"), orderBy("timestamp", "desc"), limit(10));
+      const querySnapshot = await getDocs(q);
+
+      purchaseList.innerHTML = '';
+
+      querySnapshot.forEach((doc) => {
+        const { date, item, quantity } = doc.data();
+        const row = `
+          <tr>
+            <td>${date}</td>
+            <td>${item}</td>
+            <td>${quantity}</td>
+          </tr>`;
+        purchaseList.innerHTML += row;
+      });
+
+      if (purchaseList.innerHTML === '') {
+        purchaseList.innerHTML = '<tr><td colspan="3">No entries found.</td></tr>';
+      }
+    }
+
+    loadPurchaseList();
+  </script>
 </body>
 </html>
