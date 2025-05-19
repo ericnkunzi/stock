@@ -1,31 +1,33 @@
-# 🧮 Stock Management Web App
+# Stock Management Web App
 
-A simple, beautiful, Firebase-powered stock management web app for small businesses to manage:
-
-- Stock In
-- Stock Out
-- Purchases
-- Stock Balance
-- Dashboard & PDF Reporting
-
-✅ Fully online  
-✅ No installation needed  
-✅ Accessible from anywhere  
-✅ Free Firebase backend  
-✅ Hosted on GitHub Pages
+## Overview
+This is a simple web application for managing stock in, stock out, purchases, stock balance, and dashboard reporting with PDF export.  
+It uses Firebase Firestore as backend for real-time data storage and retrieval. The app is fully client-side and hosted on GitHub Pages.
 
 ---
 
-## 🔧 Features
+## Features
 
-- Add/view stock in and stock out entries
-- Add/view purchase entries
-- Live stock balance calculation
-- Export Dashboard to PDF
-- Firebase Firestore as backend
-- Clean and responsive design
+- Add, update and view Stock In records  
+- Add, update and view Stock Out records  
+- Add, update and view Purchases (automatically updates Stock In balance)  
+- View Stock Balance (calculated as Stock In + Purchases - Stock Out)  
+- Dashboard with data analysis and PDF export  
+- Responsive and clean UI with navigation between pages  
+- Data stored persistently in Firebase Firestore  
 
 ---
 
-## 📁 Project Structure
+## Prerequisites
 
+1. Firebase Project (You already have it).  
+2. Firestore rules set to allow read/write (your current rules are OK for testing):  
+```firebase
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
