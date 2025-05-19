@@ -1,47 +1,49 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stock Management App - Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock Management System</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <nav>
-    <ul class="nav-list">
-      <li><a href="index.html" class="active">Home</a></li>
-      <li><a href="stock_in.html">Stock In</a></li>
-      <li><a href="stock_out.html">Stock Out</a></li>
-      <li><a href="purchases.html">Purchases</a></li>
-      <li><a href="stock_balance.html">Stock Balance</a></li>
-      <li><a href="dashboard.html">Dashboard</a></li>
-    </ul>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Stock Manager</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+        data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+        aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link" href="stock_in.html">Stock In</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock_out.html">Stock Out</a></li>
+          <li class="nav-item"><a class="nav-link" href="purchases.html">Purchases</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock_balance.html">Stock Balance</a></li>
+          <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
   </nav>
 
-  <main>
-    <h1>Welcome to Stock Management App</h1>
-    <div id="firebase-status">Checking Firebase connection...</div>
-  </main>
+  <!-- Content -->
+  <div class="container mt-5">
+    <h1 class="text-center mb-4">Welcome to Stock Management System</h1>
+    <p class="text-center">Use the navigation menu to manage stock in/out, purchases, and generate reports.</p>
+    <div class="text-center mt-4">
+      <img src="https://cdn-icons-png.flaticon.com/512/2620/2620952.png" alt="Stock Icon" width="120"/>
+    </div>
+  </div>
 
-  <script type="module">
-    import { db } from "./firebase.js";
+  <!-- Footer -->
+  <footer>
+    &copy; 2025 Stock Manager. All rights reserved.
+  </footer>
 
-    // Try a simple Firestore read to test connection
-    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-
-    async function checkFirestore() {
-      try {
-        // Try to get an empty collection (e.g., test connection)
-        const querySnapshot = await getDocs(collection(db, "testConnection"));
-        document.getElementById("firebase-status").textContent = "Firebase connected successfully!";
-      } catch (error) {
-        document.getElementById("firebase-status").textContent = "Firebase connection failed: " + error.message;
-      }
-    }
-
-    checkFirestore();
-  </script>
-
+  <!-- Bootstrap Script -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
