@@ -2,37 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard - Stock Management</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard - Stock Management App</title>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
   <header>
-    <h1>Monthly Summary Report</h1>
+    <h1>Stock Management App</h1>
+    <nav>
+      <a href="index.html">Home</a> |
+      <a href="stock_in.html">Stock In</a> |
+      <a href="stock_out.html">Stock Out</a> |
+      <a href="dashboard.html" class="active">Dashboard</a>
+    </nav>
   </header>
 
   <main>
-    <table>
-      <thead>
-        <tr>
-          <th>Month</th>
-          <th>Item Description</th>
-          <th>Total Stock In</th>
-          <th>Total Stock Out</th>
-        </tr>
-      </thead>
-      <tbody id="dashboard-body">
-        <!-- Data will be inserted here by script.js -->
-      </tbody>
-    </table>
-
-    <button id="export-pdf">Export to PDF</button>
+    <section class="card">
+      <h2>Monthly Summary Report</h2>
+      <table id="dashboard-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Item Description</th>
+            <th>Total Stock In</th>
+            <th>Total Stock Out</th>
+          </tr>
+        </thead>
+        <tbody id="dashboard-body">
+          <!-- Data loaded here dynamically -->
+        </tbody>
+      </table>
+      <button id="export-pdf" class="btn">Export to PDF</button>
+    </section>
   </main>
 
   <footer>
-    <p>&copy; 2025 Stock Management App</p>
+    <p>© 2025 Stock Management App</p>
   </footer>
 
   <script type="module" src="script.js"></script>
