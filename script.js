@@ -1,143 +1,70 @@
-// script.js
+import { db } from './firebase.js';
+import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
 
-// Firebase Firestore references
-const db = firebase.firestore();
+const dashboardBody = document.getElementById('dashboard-body');
+const exportBtn = document.getElementById('export-pdf');
 
-// Populate Stock Balance Table
-async function loadStockBalance() {
-  const stockInSnap = await db.collection("stock_in").get();
-  const stockOutSnap = await db.collection("stock_out").get();
+async function loadDashboard() {
+  const stockInSnap = await getDocs(collection(db, 'stock_in'));
+  const stockOutSnap = await getDocs(collection(db, 'stock_out'));
 
-  const balance = {};
+  const summary = {};
 
+  // Process Stock In
   stockInSnap.forEach(doc => {
     const data = doc.data();
-    const desc = data.description;
-    const qty = parseInt(data.quantity);
-
-    if (!balance[desc]) balance[desc] = { in: 0, out: 0 };
-    balance[desc].in += qty;
+    const month = data.date.toDate().toISOString().slice(0, 7);
+    const desc = data.item;
+    const key = `${month}_${desc}`;
+    if (!summary[key]) summary[key] = { item: desc, month, stockIn: 0, stockOut: 0 };
+    summary[key].stockIn += Number(data.quantity);
   });
 
+  // Process Stock Out
   stockOutSnap.forEach(doc => {
     const data = doc.data();
-    const desc = data.description;
-    const qty = parseInt(data.quantity);
-
-    if (!balance[desc]) balance[desc] = { in: 0, out: 0 };
-    balance[desc].out += qty;
+    const month = data.date.toDate().toISOString().slice(0, 7);
+    const desc = data.item;
+    const key = `${month}_${desc}`;
+    if (!summary[key]) summary[key] = { item: desc, month, stockIn: 0, stockOut: 0 };
+    summary[key].stockOut += Number(data.quantity);
   });
 
-  const tableBody = document.querySelector("#stockBalanceTable tbody");
-  tableBody.innerHTML = "";
-
-  for (const desc in balance) {
-    const row = document.createElement("tr");
-    const currentBalance = balance[desc].in - balance[desc].out;
-
+  dashboardBody.innerHTML = '';
+  Object.values(summary).forEach(entry => {
+    const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${desc}</td>
-      <td>${currentBalance}</td>
+      <td>${entry.month}</td>
+      <td>${entry.item}</td>
+      <td>${entry.stockIn}</td>
+      <td>${entry.stockOut}</td>
     `;
-    tableBody.appendChild(row);
-  }
+    dashboardBody.appendChild(row);
+  });
 }
 
-// Load Monthly Report with Item Descriptions
-async function loadMonthlyReport() {
-  const stockInSnap = await db.collection("stock_in").get();
-  const stockOutSnap = await db.collection("stock_out").get();
-
-  const report = {};
-
-  stockInSnap.forEach(doc => {
-    const data = doc.data();
-    const date = new Date(data.date);
-    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    const desc = data.description;
-    const qty = parseInt(data.quantity);
-
-    if (!report[month]) report[month] = {};
-    if (!report[month][desc]) report[month][desc] = { in: 0, out: 0 };
-
-    report[month][desc].in += qty;
-  });
-
-  stockOutSnap.forEach(doc => {
-    const data = doc.data();
-    const date = new Date(data.date);
-    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    const desc = data.description;
-    const qty = parseInt(data.quantity);
-
-    if (!report[month]) report[month] = {};
-    if (!report[month][desc]) report[month][desc] = { in: 0, out: 0 };
-
-    report[month][desc].out += qty;
-  });
-
-  const tableBody = document.querySelector("#dashboardTable tbody");
-  tableBody.innerHTML = "";
-
-  for (const month in report) {
-    for (const desc in report[month]) {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${month}</td>
-        <td>${desc}</td>
-        <td>${report[month][desc].in}</td>
-        <td>${report[month][desc].out}</td>
-      `;
-      tableBody.appendChild(row);
-    }
-  }
-}
-
-// PDF Export for Dashboard
-document.getElementById("exportPdfBtn").addEventListener("click", function () {
+function exportToPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  doc.text("Monthly Stock Summary Report", 14, 14);
-  const table = document.getElementById("dashboardTable");
+  const rows = [];
+  const tableRows = dashboardBody.querySelectorAll('tr');
+  tableRows.forEach(tr => {
+    const cols = tr.querySelectorAll('td');
+    const row = [];
+    cols.forEach(td => row.push(td.innerText));
+    rows.push(row);
+  });
 
-  let y = 30;
+  doc.setFontSize(14);
+  doc.text('Monthly Stock Summary', 10, 10);
+  doc.autoTable({
+    head: [['Month', 'Item Description', 'Total Stock In', 'Total Stock Out']],
+    body: rows,
+    startY: 20,
+  });
+  doc.save('dashboard_report.pdf');
+}
 
-  doc.setFontSize(10);
-  doc.text("Month", 14, y);
-  doc.text("Item Description", 50, y);
-  doc.text("Stock In", 130, y);
-  doc.text("Stock Out", 160, y);
-  y += 10;
-
-  for (let i = 1; i < table.rows.length; i++) {
-    const row = table.rows[i];
-    const month = row.cells[0].innerText;
-    const desc = row.cells[1].innerText;
-    const inQty = row.cells[2].innerText;
-    const outQty = row.cells[3].innerText;
-
-    doc.text(month, 14, y);
-    doc.text(desc, 50, y);
-    doc.text(inQty, 130, y);
-    doc.text(outQty, 160, y);
-    y += 10;
-
-    if (y > 280) {
-      doc.addPage();
-      y = 30;
-    }
-  }
-
-  doc.save("Monthly_Stock_Summary.pdf");
-});
-
-// Run the dashboard functions if present
-document.addEventListener("DOMContentLoaded", () => {
-  if (document.querySelector("#stockBalanceTable")) {
-    loadStockBalance();
-  }
-  if (document.querySelector("#dashboardTable")) {
-    loadMonthlyReport();
-  }
-});
+if (dashboardBody) loadDashboard();
+if (exportBtn) exportBtn.addEventListener('click', exportToPDF);
