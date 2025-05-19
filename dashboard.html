@@ -1,50 +1,41 @@
+<!-- dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard - Stock Management App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- jsPDF and autotable for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Stock Management App</h1>
-    <nav>
-      <a href="index.html">Home</a> |
-      <a href="stock_in.html">Stock In</a> |
-      <a href="stock_out.html">Stock Out</a> |
-      <a href="dashboard.html" class="active">Dashboard</a>
-    </nav>
-  </header>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html">Stock Manager</a>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="stock_in.html">Stock In</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock_out.html">Stock Out</a></li>
+          <li class="nav-item"><a class="nav-link" href="purchases.html">Purchases</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock_balance.html">Stock Balance</a></li>
+          <li class="nav-item"><a class="nav-link active" href="dashboard.html">Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-  <main>
-    <section class="card">
-      <h2>Monthly Summary Report</h2>
-      <table id="dashboard-table">
-        <thead>
-          <tr>
-            <th>Month</th>
-            <th>Item Description</th>
-            <th>Total Stock In</th>
-            <th>Total Stock Out</th>
-          </tr>
-        </thead>
-        <tbody id="dashboard-body">
-          <!-- Data inserted dynamically -->
-        </tbody>
-      </table>
-      <button id="export-pdf" class="btn">Export to PDF</button>
-    </section>
-  </main>
+  <!-- Content -->
+  <div class="container mt-5">
+    <h2 class="text-center mb-4">Dashboard</h2>
+    <div class="text-end mb-3">
+      <button id="exportBtn" class="btn btn-success">Export to PDF</button>
+    </div>
+    <div id="dashboardTable">Loading dashboard data...</div>
+  </div>
 
-  <footer>
-    <p>© 2025 Stock Management App</p>
-  </footer>
-
-  <!-- Your script.js must have type module because it imports firebase -->
+  <!-- Firebase & Scripts -->
+  <script type="module" src="firebase.js"></script>
   <script type="module" src="script.js"></script>
 </body>
 </html>
