@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard - Stock Management App</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- jsPDF and autotable for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
@@ -32,7 +33,7 @@
           </tr>
         </thead>
         <tbody id="dashboard-body">
-          <!-- Data loaded here dynamically -->
+          <!-- Data inserted dynamically -->
         </tbody>
       </table>
       <button id="export-pdf" class="btn">Export to PDF</button>
@@ -43,6 +44,7 @@
     <p>© 2025 Stock Management App</p>
   </footer>
 
+  <!-- Your script.js must have type module because it imports firebase -->
   <script type="module" src="script.js"></script>
 </body>
 </html>
