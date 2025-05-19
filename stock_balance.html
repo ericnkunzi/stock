@@ -1,37 +1,99 @@
-<!-- stock_balance.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Stock Balance</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg fixed-top">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="index.html">Stock Manager</a>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="stock_in.html">Stock In</a></li>
-          <li class="nav-item"><a class="nav-link" href="stock_out.html">Stock Out</a></li>
-          <li class="nav-item"><a class="nav-link" href="purchases.html">Purchases</a></li>
-          <li class="nav-item"><a class="nav-link active" href="stock_balance.html">Stock Balance</a></li>
-          <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
-        </ul>
-      </div>
-    </div>
+  <nav>
+    <ul>
+      <li><a href="stock_in.html">Stock In</a></li>
+      <li><a href="stock_out.html">Stock Out</a></li>
+      <li><a href="purchases.html">Purchases</a></li>
+      <li><a href="stock_balance.html" class="active">Stock Balance</a></li>
+      <li><a href="index.html">Dashboard</a></li>
+    </ul>
   </nav>
 
-  <!-- Content -->
-  <div class="container mt-5">
-    <h2 class="text-center mb-4">Stock Balance</h2>
-    <div id="balanceList">Loading stock balances...</div>
-  </div>
+  <main>
+    <h1>📊 Stock Balance Overview</h1>
+    <div class="entries">
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Opening Stock</th>
+            <th>Current Balance</th>
+            <th>Safety Stock</th>
+            <th>Status</th>
+            <th>Update Safety</th>
+          </tr>
+        </thead>
+        <tbody id="stockTable">
+          <tr><td colspan="6">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
 
-  <!-- Firebase & Scripts -->
-  <script type="module" src="firebase.js"></script>
-  <script type="module" src="script.js"></script>
+  <script type="module">
+    import { db } from './firebase.js';
+    import { collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+    const stockTable = document.getElementById('stockTable');
+
+    async function loadStockBalance() {
+      const querySnapshot = await getDocs(collection(db, "stock_balance"));
+      stockTable.innerHTML = '';
+
+      querySnapshot.forEach((docSnap) => {
+        const item = docSnap.id;
+        const data = docSnap.data();
+        const { opening_stock, current_balance, safety_stock, status } = data;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item}</td>
+          <td>${opening_stock ?? 0}</td>
+          <td>${current_balance ?? 0}</td>
+          <td>
+            <input type="number" value="${safety_stock ?? 0}" min="0" style="width: 60px;" id="safety-${item}">
+          </td>
+          <td>${status ?? 'Unknown'}</td>
+          <td>
+            <button onclick="updateSafety('${item}')">💾</button>
+          </td>
+        `;
+        stockTable.appendChild(row);
+      });
+
+      if (stockTable.innerHTML.trim() === '') {
+        stockTable.innerHTML = '<tr><td colspan="6">No stock data found.</td></tr>';
+      }
+    }
+
+    window.updateSafety = async function(item) {
+      const safetyInput = document.getElementById(`safety-${item}`);
+      const safetyValue = parseInt(safetyInput.value);
+
+      if (isNaN(safetyValue) || safetyValue < 0) {
+        alert("Invalid safety stock value.");
+        return;
+      }
+
+      const itemRef = doc(db, "stock_balance", item);
+      await updateDoc(itemRef, {
+        safety_stock: safetyValue,
+        status: (await getDocs(collection(db, "stock_balance"))).docs.find(d => d.id === item).data().current_balance >= safetyValue ? 'OK' : 'Reorder'
+      });
+
+      alert("Safety stock updated.");
+      loadStockBalance();
+    };
+
+    loadStockBalance();
+  </script>
 </body>
 </html>
