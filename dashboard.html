@@ -1,44 +1,32 @@
-**dashboard.html**
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Stock Management</title>
+  <link rel="stylesheet" href="styles.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
   <header>
-    <h1>Monthly Dashboard Report</h1>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="stock_in.html">Stock In</a>
-      <a href="stock_out.html">Stock Out</a>
-      <a href="purchases.html">Purchases</a>
-      <a href="stock_balance.html">Stock Balance</a>
-    </nav>
+    <h1>Monthly Summary Report</h1>
   </header>
 
   <main>
-    <section>
-      <h2>Monthly Summary Report</h2>
-      <table id="dashboard-table">
-        <thead>
-          <tr>
-            <th>Month</th>
-            <th>Item Description</th>
-            <th>Total Stock In</th>
-            <th>Total Stock Out</th>
-          </tr>
-        </thead>
-        <tbody id="dashboard-body">
-          <!-- Data populated by script.js -->
-        </tbody>
-      </table>
-    </section>
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Item Description</th>
+          <th>Total Stock In</th>
+          <th>Total Stock Out</th>
+        </tr>
+      </thead>
+      <tbody id="dashboard-body">
+        <!-- Data will be inserted here by script.js -->
+      </tbody>
+    </table>
 
     <button id="export-pdf">Export to PDF</button>
   </main>
@@ -47,88 +35,6 @@
     <p>&copy; 2025 Stock Management App</p>
   </footer>
 
-  <script type="module" src="firebase.js"></script>
   <script type="module" src="script.js"></script>
 </body>
 </html>
-```
-
-**script.js**
-```javascript
-import { db } from './firebase.js';
-import {
-  collection,
-  getDocs,
-} from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
-
-const dashboardBody = document.getElementById('dashboard-body');
-const exportBtn = document.getElementById('export-pdf');
-
-async function loadDashboard() {
-  const stockInSnap = await getDocs(collection(db, 'stock_in'));
-  const stockOutSnap = await getDocs(collection(db, 'stock_out'));
-
-  const summary = {};
-
-  stockInSnap.forEach(doc => {
-    const data = doc.data();
-    const month = data.date.toDate().toISOString().slice(0, 7);
-    const desc = data.item;
-    const key = `${month}_${desc}`;
-    if (!summary[key]) summary[key] = { item: desc, month, stockIn: 0, stockOut: 0 };
-    summary[key].stockIn += Number(data.quantity);
-  });
-
-  stockOutSnap.forEach(doc => {
-    const data = doc.data();
-    const month = data.date.toDate().toISOString().slice(0, 7);
-    const desc = data.item;
-    const key = `${month}_${desc}`;
-    if (!summary[key]) summary[key] = { item: desc, month, stockIn: 0, stockOut: 0 };
-    summary[key].stockOut += Number(data.quantity);
-  });
-
-  dashboardBody.innerHTML = '';
-  Object.values(summary).forEach(entry => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${entry.month}</td>
-      <td>${entry.item}</td>
-      <td>${entry.stockIn}</td>
-      <td>${entry.stockOut}</td>
-    `;
-    dashboardBody.appendChild(row);
-  });
-}
-
-function exportToPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const rows = [];
-  const tableRows = dashboardBody.querySelectorAll('tr');
-  tableRows.forEach(tr => {
-    const cols = tr.querySelectorAll('td');
-    const row = [];
-    cols.forEach(td => row.push(td.innerText));
-    rows.push(row);
-  });
-
-  doc.setFontSize(14);
-  doc.text('Monthly Stock Summary', 10, 10);
-  doc.autoTable({
-    head: [['Month', 'Item Description', 'Total Stock In', 'Total Stock Out']],
-    body: rows,
-    startY: 20,
-  });
-
-  doc.save('dashboard_report.pdf');
-}
-
-if (dashboardBody) loadDashboard();
-if (exportBtn) exportBtn.addEventListener('click', exportToPDF);
-```
-
-✅ Dashboard now:
-- Shows item description with each month
-- PDF export works
-- No "coming soon" anymore — the button is active and functional
