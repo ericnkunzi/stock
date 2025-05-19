@@ -1,6 +1,4 @@
 // firebase.js
-// Firebase v9 modular SDK
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
@@ -14,11 +12,7 @@ const firebaseConfig = {
   measurementId: "G-LS4RF6YXVR"
 };
 
-// Initialize Firebase app
 const app = initializeApp(firebaseConfig);
-
-// Initialize Firestore
 const db = getFirestore(app);
 
-// Export Firestore instance for use in other scripts
 export { db };
