@@ -1,128 +1,37 @@
+<!-- stock_balance.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stock Balance - Stock Management App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock Balance</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <nav>
-    <ul class="nav-list">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="stock_in.html">Stock In</a></li>
-      <li><a href="stock_out.html">Stock Out</a></li>
-      <li><a href="purchases.html">Purchases</a></li>
-      <li><a href="stock_balance.html" class="active">Stock Balance</a></li>
-      <li><a href="dashboard.html">Dashboard</a></li>
-    </ul>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html">Stock Manager</a>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="stock_in.html">Stock In</a></li>
+          <li class="nav-item"><a class="nav-link" href="stock_out.html">Stock Out</a></li>
+          <li class="nav-item"><a class="nav-link" href="purchases.html">Purchases</a></li>
+          <li class="nav-item"><a class="nav-link active" href="stock_balance.html">Stock Balance</a></li>
+          <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
   </nav>
 
-  <main>
-    <h1>Stock Balance</h1>
-    <table id="stockBalanceTable" border="1" cellpadding="5" cellspacing="0">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Opening Stock</th>
-          <th>Stock In</th>
-          <th>Stock Out</th>
-          <th>Current Balance</th>
-          <th>Safety Stock</th>
-          <th>Stock Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Stock balance rows go here -->
-      </tbody>
-    </table>
-  </main>
+  <!-- Content -->
+  <div class="container mt-5">
+    <h2 class="text-center mb-4">Stock Balance</h2>
+    <div id="balanceList">Loading stock balances...</div>
+  </div>
 
-  <script type="module">
-    import { db } from "./firebase.js";
-    import {
-      collection,
-      query,
-      onSnapshot,
-      setDoc,
-      doc,
-      getDocs,
-    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-
-    const stockInRef = collection(db, "stock_in");
-    const stockOutRef = collection(db, "stock_out");
-    const safetyRef = collection(db, "safety_stock");
-
-    const stockBalanceTable = document.querySelector("#stockBalanceTable tbody");
-
-    async function loadStockData() {
-      const stockInSnap = await getDocs(stockInRef);
-      const stockOutSnap = await getDocs(stockOutRef);
-      const safetySnap = await getDocs(safetyRef);
-
-      const stockInMap = {};
-      const stockOutMap = {};
-      const safetyMap = {};
-
-      stockInSnap.forEach(doc => {
-        const item = doc.data().item;
-        const qty = doc.data().quantity;
-        stockInMap[item] = (stockInMap[item] || 0) + qty;
-      });
-
-      stockOutSnap.forEach(doc => {
-        const item = doc.data().item;
-        const qty = doc.data().quantity;
-        stockOutMap[item] = (stockOutMap[item] || 0) + qty;
-      });
-
-      safetySnap.forEach(doc => {
-        const item = doc.id;
-        const safety = doc.data().quantity;
-        safetyMap[item] = safety;
-      });
-
-      const allItems = new Set([...Object.keys(stockInMap), ...Object.keys(stockOutMap)]);
-
-      stockBalanceTable.innerHTML = "";
-
-      for (const item of allItems) {
-        const stockInQty = stockInMap[item] || 0;
-        const stockOutQty = stockOutMap[item] || 0;
-        const openingStock = 0; // For simplicity, assume 0 or you can expand with logic
-        const currentBalance = stockInQty - stockOutQty;
-        const safetyQty = safetyMap[item] || 0;
-        const status = currentBalance < safetyQty ? "Reorder" : "OK";
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${item}</td>
-          <td>${openingStock}</td>
-          <td>${stockInQty}</td>
-          <td>${stockOutQty}</td>
-          <td>${currentBalance}</td>
-          <td>
-            <input type="number" min="0" value="${safetyQty}" data-item="${item}" class="safety-input" />
-          </td>
-          <td>${status}</td>
-        `;
-        stockBalanceTable.appendChild(row);
-      }
-
-      // Add event listeners to safety stock inputs
-      document.querySelectorAll(".safety-input").forEach(input => {
-        input.addEventListener("change", async () => {
-          const item = input.dataset.item;
-          const newVal = Number(input.value);
-          if (!isNaN(newVal) && newVal >= 0) {
-            await setDoc(doc(db, "safety_stock", item), { quantity: newVal });
-            loadStockData(); // Reload to update status
-          }
-        });
-      });
-    }
-
-    loadStockData();
-  </script>
+  <!-- Firebase & Scripts -->
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
