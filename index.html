@@ -3,32 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stock Management App - Home</title>
+  <title>Stock Management System - Home</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <!-- Google Fonts for nice look -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
 </head>
 <body>
   <header>
-    <h1>Welcome to Stock Management System</h1>
+    <h1>Stock Management System</h1>
     <nav>
-      <a href="stock_in.html">Stock In</a>
-      <a href="stock_out.html">Stock Out</a>
-      <a href="purchases.html">Purchases</a>
-      <a href="stock_balance.html">Stock Balance</a>
-      <a href="dashboard.html">Dashboard</a>
+      <ul class="nav-menu">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="stock_in.html">Stock In</a></li>
+        <li><a href="stock_out.html">Stock Out</a></li>
+        <li><a href="purchases.html">Purchases</a></li>
+        <li><a href="stock_balance.html">Stock Balance</a></li>
+        <li><a href="dashboard.html">Dashboard</a></li>
+      </ul>
     </nav>
   </header>
 
-  <main>
-    <p>Please use the navigation links above to manage stock and view reports.</p>
+  <main class="container">
+    <section class="welcome">
+      <h2>Welcome to the Stock Management Web App</h2>
+      <p>
+        Use the navigation menu above to manage stock in, stock out, purchases, view stock balance,
+        and see reports in the dashboard.
+      </p>
+      <p>
+        All data is saved securely in Firebase Firestore and accessible anytime from anywhere.
+      </p>
+      <p>
+        Please select a page to get started.
+      </p>
+    </section>
   </main>
 
   <footer>
-    <p>© 2025 Your Company Name</p>
+    <p>© 2025 Your Company Name | Developed by AI Assistant</p>
   </footer>
-
-  <script src="firebase.js"></script>
 </body>
 </html>
